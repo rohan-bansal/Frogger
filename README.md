@@ -1,10 +1,12 @@
 # Frogger
 The classic frogger game in python.
 
+_60% Complete_
+
 
 ## Features
 
-- 3 sections for the "frog" (ninja) to pass: cars, buses, and bikes
+- 3 sections for the player to pass: cars, buses, and bikes
 - 3 lives
 - Made entirely in Python
 
