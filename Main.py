@@ -189,6 +189,7 @@ class Player():
 
 def reinit(board, user, yes, no, gm, sc, pa):
     board.score = 0
+    board.updateScore()
     yes.destroy()
     no.destroy()
     board.get_canvas().delete(gm)
