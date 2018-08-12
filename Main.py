@@ -1,6 +1,5 @@
 import tkinter as tk
 from tkinter import messagebox
-import time
 import os, sys
 
 try:
@@ -31,15 +30,18 @@ class Canvas():
             "Bus" : tk.PhotoImage(file = path + "/Images/Bus.png"),
             "Bike" : tk.PhotoImage(file = path + "/Images/Bike.png")
         }
-
+        
         self.canvas = tk.Canvas(self.root, width = 1000, height = 700)
         self.canvas.pack()
 
-        background = self.canvas.create_image(0, 0, image = self.imageData["Background"], anchor = "nw")
+        self.draw_background()
         self.scoretext = self.canvas.create_text(450, 20, fill = "black", font = ("Helvetica", 15), text = "Score: " + str(self.score))
 
     def get_canvas(self):
         return self.canvas
+
+    def draw_background(self):
+        self.canvas.create_image(0, 0, image = self.imageData["Background"], anchor = "nw")
 
     def updateScore(self):
         self.canvas.delete(self.scoretext)
@@ -110,14 +112,13 @@ class Vehicle():
         elif self.x < 0:
             vehicles.remove(self)
             canvas.delete(self.ID) 
-        
-
-    def draw_more(self, canvas, vehicles):
-        vehicles.append(Vehicle(canvas, self.row))
 
     def detect_collision(self, player, board):
-        if(len(board.get_canvas().find_overlapping(*board.get_canvas().bbox(player.player))) == 3):
-            return True
+        try:
+            if(len(board.get_canvas().find_overlapping(*board.get_canvas().bbox(player.player))) == 3):
+                return True
+        except:
+            board.get_canvas().delete(self.ID)
 
     def detect_score(self, player):
         if(player.y == 50):
@@ -187,8 +188,9 @@ class Player():
         self.y = 650
         self.player = self.canvas.get_canvas().create_image(self.x, self.y, image = self.canvas.imageData["Player"], anchor = "nw")
 
-def reinit(board, user, yes, no, gm, sc, pa):
+def reinit(board, user, yes, no, gm, sc, pa, vehic):
     board.score = 0
+    end2 = False
     board.updateScore()
     yes.destroy()
     no.destroy()
@@ -199,39 +201,47 @@ def reinit(board, user, yes, no, gm, sc, pa):
     pygame.mixer.init()
     pygame.mixer.music.load(path + "/Sounds/Sunburst.mp3")
     pygame.mixer.music.play()
+    start(board.get_canvas(), vehic, end2)
 
 
-def end(canvas, which, vehicles):
-    if(which == "gameover"):
-        gm = canvas.create_text(500, 300, fill = "red", font = ("Comic Sans", 50), text = "Game Over...")
-        sc = canvas.create_text(500, 350, fill = "green", font = ("Comic Sans", 30), text = "Total Score: " + str(board.score))
-        pa = canvas.create_text(490, 380, fill = "dark blue", font = ("Times", 20), text = "Play again?")
+def end(canvas, vehicles):
+    canvas.delete("all")
+    board.draw_background()
+    gm = canvas.create_text(500, 300, fill = "red", font = ("Comic Sans", 50), text = "Game Over...")
+    sc = canvas.create_text(500, 350, fill = "green", font = ("Comic Sans", 30), text = "Total Score: " + str(board.score))
+    pa = canvas.create_text(490, 380, fill = "dark blue", font = ("Times", 20), text = "Play again?")
     no = tk.Button(window, text = "No", bg = "red", command = quit)
-    yes = tk.Button(window, text = "Yes", bg = "green", command = lambda: reinit(board, user, yes, no, gm, sc, pa))
+    yes = tk.Button(window, text = "Yes", bg = "green", command = lambda: reinit(board, user, yes, no, gm, sc, pa, vehicles))
     yes.place(x = 440, y = 400)
     no.place(x = 490, y = 400)
 
-def start(canvas, vehicles):
+def start(canvas, vehicles, end2):
     for vehicle in vehicles:
         vehicle.draw(canvas)
         vehicle.multipleDraw(board, vehicles)
         vehicle.destroy(canvas, vehicles)
         if(vehicle.detect_collision(user, board)):
+            end2 = True
             user.moveToStart()
             pygame.mixer.music.pause()
             pygame.mixer.music.load(path + "/Sounds/Explosion.mp3")
             pygame.mixer.music.play()
-            end(canvas, "gameover", vehicles)
+            end(canvas, vehicles)
         if(vehicle.detect_score(user)):
             user.moveToStart()
             board.score += 1
             board.updateScore()
-
-    canvas.after(20, start, canvas, vehicles)
+    if(end2 == False):
+        canvas.after(20, start, canvas, vehicles, end2)
+    else:
+        pass
 
 def beginInit():
     global board
     global user
+    global end2
+
+    end2 = False
 
     pygame.mixer.init()
     pygame.mixer.music.load(path + "/Sounds/Sunburst.mp3")
@@ -240,7 +250,7 @@ def beginInit():
     board = Canvas(window)
     user = Player(window, board)
     vehicles = [Vehicle(board, i) for i in range(1,7)]
-    start(board.get_canvas(), vehicles)
+    start(board.get_canvas(), vehicles, end2)
 
 path = os.path.dirname(os.path.abspath(__file__))
 window = tk.Tk()
