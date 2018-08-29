@@ -1,6 +1,8 @@
 # Frogger
 The classic frogger game in python.
 
+Download the release here: https://github.com/Rohan-Bansal/Frogger/releases/tag/v2.1.1
+
 _100% Complete_
 
 
